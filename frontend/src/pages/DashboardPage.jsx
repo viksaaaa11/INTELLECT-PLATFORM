@@ -141,8 +141,8 @@ const DashboardPage = () => {
             <CardTitle className="text-lg font-semibold text-white font-['Manrope']">Performance Overview</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-[300px] min-h-[300px]">
+              <ResponsiveContainer width="100%" height={280} minWidth={300}>
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
@@ -178,8 +178,8 @@ const DashboardPage = () => {
             <CardTitle className="text-lg font-semibold text-white font-['Manrope']">Monthly Activity</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-[300px] min-h-[300px]">
+              <ResponsiveContainer width="100%" height={280} minWidth={300}>
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                   <XAxis dataKey="name" stroke="#666" tick={{ fill: '#888' }} />
