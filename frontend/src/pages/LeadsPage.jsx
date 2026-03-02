@@ -124,15 +124,22 @@ const LeadsPage = () => {
 
   return (
     <div className="space-y-6" data-testid="leads-page">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white font-['Manrope']">Leads</h1>
-          <p className="text-muted-foreground">Manage and purchase leads</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="text-sm text-muted-foreground">
-            Wallet: <span className="text-[#D4AF37] font-semibold">{wallet?.balance?.toLocaleString() || 0} AED</span>
+      {/* Header with background */}
+      <div 
+        className="relative rounded-2xl overflow-hidden p-8 bg-cover bg-center"
+        style={{
+          backgroundImage: 'linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url(https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1600)'
+        }}
+      >
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-white font-['Manrope']">Leads</h1>
+            <p className="text-muted-foreground">Manage and purchase leads</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="text-sm text-muted-foreground bg-black/50 px-4 py-2 rounded-lg">
+              Wallet: <span className="text-[#D4AF37] font-semibold">{wallet?.balance?.toLocaleString() || 0} AED</span>
+            </div>
           </div>
         </div>
       </div>

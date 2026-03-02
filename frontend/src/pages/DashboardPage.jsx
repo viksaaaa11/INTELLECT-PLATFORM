@@ -73,12 +73,19 @@ const DashboardPage = () => {
 
   return (
     <div className="space-y-6" data-testid="dashboard-page">
-      {/* Welcome section */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white font-['Manrope']">
-          Welcome back, <span className="text-[#D4AF37]">{user?.name?.split(' ')[0]}</span>
-        </h1>
-        <p className="text-muted-foreground mt-1">Here's what's happening with your business today.</p>
+      {/* Hero section with background */}
+      <div 
+        className="relative rounded-2xl overflow-hidden p-8 bg-cover bg-center"
+        style={{
+          backgroundImage: 'linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.9)), url(https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1600)'
+        }}
+      >
+        <div className="relative z-10">
+          <h1 className="text-3xl font-bold text-white font-['Manrope']">
+            Welcome back, <span className="text-[#D4AF37]">{user?.name?.split(' ')[0]}</span>
+          </h1>
+          <p className="text-muted-foreground mt-1">Here's what's happening with your business today.</p>
+        </div>
       </div>
 
       {/* Metrics Grid */}

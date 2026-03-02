@@ -11,7 +11,8 @@ import {
   Building2,
   Menu,
   X,
-  Bell
+  Bell,
+  Store
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from './ui/button';
@@ -39,6 +40,7 @@ const Layout = () => {
     { to: '/leads', icon: Users, label: 'Leads' },
     { to: '/clients', icon: UserCircle, label: 'Clients' },
     { to: '/deals', icon: Briefcase, label: 'Deals' },
+    { to: '/marketplace', icon: Store, label: 'Marketplace' },
     { to: '/wallet', icon: Wallet, label: 'Wallet' },
   ];
 

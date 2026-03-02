@@ -175,13 +175,19 @@ const DealsPage = () => {
 
   return (
     <div className="space-y-6" data-testid="deals-page">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white font-['Manrope']">Deals Pipeline</h1>
-          <p className="text-muted-foreground">Track your deals through the sales pipeline</p>
-        </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      {/* Header with background */}
+      <div 
+        className="relative rounded-2xl overflow-hidden p-8 bg-cover bg-center"
+        style={{
+          backgroundImage: 'linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url(https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1600)'
+        }}
+      >
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-white font-['Manrope']">Deals Pipeline</h1>
+            <p className="text-muted-foreground">Track your deals through the sales pipeline</p>
+          </div>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button className="btn-gold" data-testid="add-deal-btn">
               <Plus className="w-4 h-4 mr-2" />
@@ -270,6 +276,7 @@ const DealsPage = () => {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Pipeline View */}

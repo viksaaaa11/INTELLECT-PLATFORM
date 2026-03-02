@@ -9,6 +9,7 @@ import LeadsPage from "./pages/LeadsPage";
 import ClientsPage from "./pages/ClientsPage";
 import DealsPage from "./pages/DealsPage";
 import WalletPage from "./pages/WalletPage";
+import MarketplacePage from "./pages/MarketplacePage";
 import AdminPage from "./pages/AdminPage";
 import "@/App.css";
 
@@ -53,6 +54,7 @@ function App() {
             <Route path="leads" element={<LeadsPage />} />
             <Route path="clients" element={<ClientsPage />} />
             <Route path="deals" element={<DealsPage />} />
+            <Route path="marketplace" element={<MarketplacePage />} />
             <Route path="wallet" element={<WalletPage />} />
             <Route path="admin" element={<AdminPage />} />
           </Route>

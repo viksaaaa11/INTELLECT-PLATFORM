@@ -45,15 +45,18 @@
 - [x] Wallet with transactions (top-up, debit)
 - [x] Dashboard API with metrics
 - [x] Admin stats endpoint
+- [x] **Marketplace Properties API**
+- [x] **Subscription Plans API** (Standard, Pro, Enterprise)
 
 #### Frontend (React)
 - [x] Auth pages (Login, Register)
 - [x] Layout with sidebar navigation
-- [x] Dashboard with metrics and charts
-- [x] Leads table with purchase flow
+- [x] Dashboard with metrics and charts + Dubai skyline background
+- [x] Leads table with purchase flow + background image
 - [x] Clients CRM with notes sidebar
-- [x] Deals pipeline (Kanban view)
-- [x] Wallet page with transactions history
+- [x] Deals pipeline (Kanban view) + background image
+- [x] **Marketplace** - Property cards with images, filters, search
+- [x] **Wallet** - Balance card, Club Membership (3 plans), Transactions
 - [x] Admin panel (Companies, Users, Leads upload)
 
 #### Design
@@ -61,17 +64,20 @@
 - [x] Gold accents (#D4AF37)
 - [x] Manrope + Inter fonts
 - [x] Luxury real estate branding
+- [x] **Background images on all key pages** (Dubai skyline, properties)
+- [x] **Property images in Marketplace cards**
 
 ## Prioritized Backlog
 
 ### P0 - Critical (Next Sprint)
-- [ ] Broker Marketplace (requests & offers)
+- [ ] Broker Marketplace (requests & offers between brokers)
 - [ ] Internal chat for deals
 
 ### P1 - High Priority
 - [ ] CSV bulk lead upload
 - [ ] Lead assignment within teams
 - [ ] Commission calculations
+- [ ] Real payment gateway (Stripe)
 
 ### P2 - Medium Priority
 - [ ] Firebase push notifications
@@ -87,11 +93,12 @@
 ## Next Action Items
 1. Implement Broker Marketplace (broker requests & offers)
 2. Add Internal Chat for deals
-3. CSV import for bulk lead creation
-4. Payment gateway integration (Stripe)
+3. Integrate Stripe for real payments
+4. CSV import for bulk lead creation
 
 ## Technical Notes
 - New users start with 1000 AED wallet balance
 - Leads become unavailable after purchase
 - All data is company-isolated (multi-tenant)
-- Tests: 94% pass rate (backend 92%, frontend 95%)
+- Subscription plans: Standard (550 AED), Pro (900 AED), Enterprise (1500 AED)
+- 6 sample properties seeded automatically

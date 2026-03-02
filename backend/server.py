@@ -197,6 +197,57 @@ class Transaction(BaseModel):
 class WalletTopUp(BaseModel):
     amount: float
 
+class PropertyCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    price: float
+    location: str
+    area: Optional[str] = None
+    bedrooms: int = 0
+    bathrooms: int = 0
+    size_sqm: float = 0
+    property_type: str = "apartment"
+    image_url: Optional[str] = None
+    is_featured: bool = False
+
+class Property(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: str
+    description: Optional[str] = None
+    price: float
+    location: str
+    area: Optional[str] = None
+    bedrooms: int = 0
+    bathrooms: int = 0
+    size_sqm: float = 0
+    property_type: str = "apartment"
+    image_url: Optional[str] = None
+    is_featured: bool = False
+    broker_id: Optional[str] = None
+    company_id: Optional[str] = None
+    status: str = "active"
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class SubscriptionPlan(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    price: float
+    features: List[str]
+    leads_per_month: int
+    is_recommended: bool = False
+
+class UserSubscription(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    plan_name: str
+    price: float
+    status: str = "active"
+    starts_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    expires_at: Optional[datetime] = None
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -806,6 +857,254 @@ async def get_admin_stats(current_user: dict = Depends(get_current_user)):
         "total_deals": total_deals,
         "total_revenue": total_revenue
     }
+
+# ============= MARKETPLACE ROUTES =============
+
+@api_router.post("/properties", response_model=Property)
+async def create_property(prop_data: PropertyCreate, current_user: dict = Depends(get_current_user)):
+    prop = Property(
+        **prop_data.model_dump(),
+        broker_id=current_user['sub'],
+        company_id=current_user.get('company_id')
+    )
+    doc = prop.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    await db.properties.insert_one(doc)
+    return prop
+
+@api_router.get("/properties", response_model=List[Property])
+async def get_properties(
+    property_type: Optional[str] = None,
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None,
+    location: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {"status": "active"}
+    
+    if property_type and property_type != "all":
+        query['property_type'] = property_type
+    if min_price:
+        query['price'] = {"$gte": min_price}
+    if max_price:
+        if 'price' in query:
+            query['price']['$lte'] = max_price
+        else:
+            query['price'] = {"$lte": max_price}
+    if location:
+        query['location'] = {"$regex": location, "$options": "i"}
+    
+    properties = await db.properties.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    for p in properties:
+        if isinstance(p.get('created_at'), str):
+            p['created_at'] = datetime.fromisoformat(p['created_at'])
+    return properties
+
+@api_router.get("/properties/{prop_id}", response_model=Property)
+async def get_property(prop_id: str, current_user: dict = Depends(get_current_user)):
+    prop = await db.properties.find_one({"id": prop_id}, {"_id": 0})
+    if not prop:
+        raise HTTPException(status_code=404, detail="Property not found")
+    if isinstance(prop.get('created_at'), str):
+        prop['created_at'] = datetime.fromisoformat(prop['created_at'])
+    return prop
+
+@api_router.delete("/properties/{prop_id}")
+async def delete_property(prop_id: str, current_user: dict = Depends(get_current_user)):
+    prop = await db.properties.find_one({"id": prop_id}, {"_id": 0})
+    if not prop:
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    if prop.get('broker_id') != current_user['sub'] and current_user['role'] != 'super_admin':
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    await db.properties.delete_one({"id": prop_id})
+    return {"message": "Property deleted"}
+
+# ============= SUBSCRIPTION ROUTES =============
+
+SUBSCRIPTION_PLANS = [
+    {
+        "id": "standard",
+        "name": "Standard",
+        "price": 550,
+        "features": ["Access to marketplace", "Up to 10 leads per month", "Basic analytics", "Email support"],
+        "leads_per_month": 10,
+        "is_recommended": False
+    },
+    {
+        "id": "pro",
+        "name": "Pro",
+        "price": 900,
+        "features": ["Everything in Standard", "Unlimited leads", "Advanced analytics", "Priority support", "Featured listings"],
+        "leads_per_month": -1,
+        "is_recommended": True
+    },
+    {
+        "id": "enterprise",
+        "name": "Enterprise",
+        "price": 1500,
+        "features": ["Everything in Pro", "Team management", "Custom integrations", "Dedicated account manager", "White-label options"],
+        "leads_per_month": -1,
+        "is_recommended": False
+    }
+]
+
+@api_router.get("/subscriptions/plans")
+async def get_subscription_plans():
+    return SUBSCRIPTION_PLANS
+
+@api_router.get("/subscriptions/my")
+async def get_my_subscription(current_user: dict = Depends(get_current_user)):
+    sub = await db.subscriptions.find_one(
+        {"user_id": current_user['sub'], "status": "active"},
+        {"_id": 0}
+    )
+    return sub
+
+@api_router.post("/subscriptions/subscribe")
+async def subscribe(plan_id: str, current_user: dict = Depends(get_current_user)):
+    plan = next((p for p in SUBSCRIPTION_PLANS if p['id'] == plan_id), None)
+    if not plan:
+        raise HTTPException(status_code=400, detail="Invalid plan")
+    
+    # Check wallet balance
+    wallet = await db.wallets.find_one({"user_id": current_user['sub']}, {"_id": 0})
+    if not wallet or wallet['balance'] < plan['price']:
+        raise HTTPException(status_code=400, detail="Insufficient balance")
+    
+    # Deduct from wallet
+    new_balance = wallet['balance'] - plan['price']
+    await db.wallets.update_one({"user_id": current_user['sub']}, {"$set": {"balance": new_balance}})
+    
+    # Create transaction
+    transaction = Transaction(
+        user_id=current_user['sub'],
+        amount=plan['price'],
+        type="debit",
+        description=f"Subscription: {plan['name']} plan"
+    )
+    trans_doc = transaction.model_dump()
+    trans_doc['created_at'] = trans_doc['created_at'].isoformat()
+    await db.transactions.insert_one(trans_doc)
+    
+    # Cancel existing subscription
+    await db.subscriptions.update_many(
+        {"user_id": current_user['sub'], "status": "active"},
+        {"$set": {"status": "cancelled"}}
+    )
+    
+    # Create new subscription
+    sub = UserSubscription(
+        user_id=current_user['sub'],
+        plan_name=plan['name'],
+        price=plan['price'],
+        expires_at=datetime.now(timezone.utc) + timedelta(days=30)
+    )
+    sub_doc = sub.model_dump()
+    sub_doc['starts_at'] = sub_doc['starts_at'].isoformat()
+    sub_doc['expires_at'] = sub_doc['expires_at'].isoformat()
+    await db.subscriptions.insert_one(sub_doc)
+    
+    return {"message": f"Subscribed to {plan['name']} plan", "new_balance": new_balance}
+
+# ============= SEED DATA =============
+
+@api_router.post("/seed/properties")
+async def seed_properties(current_user: dict = Depends(get_current_user)):
+    """Seed sample properties for marketplace"""
+    sample_properties = [
+        {
+            "title": "Luxury Penthouse in Dubai Marina",
+            "description": "Stunning penthouse with panoramic views of the marina and sea",
+            "price": 15000000,
+            "location": "Dubai Marina",
+            "area": "Dubai Marina",
+            "bedrooms": 4,
+            "bathrooms": 5,
+            "size_sqm": 511,
+            "property_type": "penthouse",
+            "image_url": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
+            "is_featured": True
+        },
+        {
+            "title": "Palm Jumeirah Villa",
+            "description": "Beachfront villa with private pool and garden",
+            "price": 35000000,
+            "location": "Palm Jumeirah",
+            "area": "Palm Jumeirah",
+            "bedrooms": 6,
+            "bathrooms": 7,
+            "size_sqm": 1115,
+            "property_type": "villa",
+            "image_url": "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800",
+            "is_featured": True
+        },
+        {
+            "title": "Downtown Dubai Apartment",
+            "description": "Modern apartment with Burj Khalifa views",
+            "price": 4500000,
+            "location": "Downtown Dubai",
+            "area": "Downtown Dubai",
+            "bedrooms": 2,
+            "bathrooms": 3,
+            "size_sqm": 167,
+            "property_type": "apartment",
+            "image_url": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800",
+            "is_featured": True
+        },
+        {
+            "title": "Townhouse in Arabian Ranches",
+            "description": "Family-friendly townhouse with community amenities",
+            "price": 3200000,
+            "location": "Arabian Ranches",
+            "area": "Arabian Ranches",
+            "bedrooms": 3,
+            "bathrooms": 4,
+            "size_sqm": 260,
+            "property_type": "townhouse",
+            "image_url": "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800",
+            "is_featured": False
+        },
+        {
+            "title": "Beachfront Apartment in JBR",
+            "description": "Direct beach access with stunning sunset views",
+            "price": 2800000,
+            "location": "JBR",
+            "area": "Jumeirah Beach Residence",
+            "bedrooms": 2,
+            "bathrooms": 2,
+            "size_sqm": 130,
+            "property_type": "apartment",
+            "image_url": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800",
+            "is_featured": False
+        },
+        {
+            "title": "Abu Dhabi Corniche Penthouse",
+            "description": "Luxurious penthouse overlooking the Corniche",
+            "price": 8500000,
+            "location": "Abu Dhabi Corniche",
+            "area": "Abu Dhabi",
+            "bedrooms": 3,
+            "bathrooms": 4,
+            "size_sqm": 325,
+            "property_type": "penthouse",
+            "image_url": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800",
+            "is_featured": True
+        }
+    ]
+    
+    created = 0
+    for prop_data in sample_properties:
+        existing = await db.properties.find_one({"title": prop_data['title']})
+        if not existing:
+            prop = Property(**prop_data)
+            doc = prop.model_dump()
+            doc['created_at'] = doc['created_at'].isoformat()
+            await db.properties.insert_one(doc)
+            created += 1
+    
+    return {"message": f"Created {created} sample properties"}
 
 # ============= ROOT =============
 
