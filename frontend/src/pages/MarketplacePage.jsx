@@ -23,10 +23,15 @@ import {
   Home,
   Castle,
   Building2,
-  Filter,
   Phone,
-  Mail
+  Mail,
+  Calendar,
+  Heart,
+  Share2,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
+import ImageGallery from '../components/ImageGallery';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -56,7 +61,6 @@ const MarketplacePage = () => {
 
   const seedAndFetchProperties = async () => {
     try {
-      // Seed sample data
       await axios.post(`${API_URL}/api/seed/properties`);
       fetchProperties();
     } catch (error) {
@@ -97,68 +101,148 @@ const MarketplacePage = () => {
     setDetailsOpen(true);
   };
 
-  const PropertyCard = ({ property }) => (
-    <Card 
-      className="bg-[#0F0F0F] border-white/5 overflow-hidden group cursor-pointer hover:border-[#D4AF37]/30 transition-all duration-300"
-      onClick={() => openDetails(property)}
-      data-testid={`property-card-${property.id}`}
-    >
-      {/* Image */}
-      <div className="relative h-48 overflow-hidden">
-        <img 
-          src={property.image_url || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800'}
-          alt={property.title}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-        />
-        {property.is_featured && (
-          <Badge className="absolute top-3 left-3 bg-[#D4AF37] text-black">
-            <Star className="w-3 h-3 mr-1" /> Featured
-          </Badge>
-        )}
-        <Button 
-          size="icon" 
-          variant="ghost" 
-          className="absolute top-3 right-3 bg-black/50 hover:bg-black/70 text-white"
-          onClick={(e) => {
-            e.stopPropagation();
-            toast.success('Added to favorites');
-          }}
-        >
-          <Star className="w-4 h-4" />
-        </Button>
-      </div>
+  // Property Card with Image Carousel
+  const PropertyCard = ({ property }) => {
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const images = property.images?.length > 0 ? property.images : [property.image_url];
 
-      {/* Content */}
-      <CardContent className="p-4">
-        <h3 className="font-semibold text-white text-lg mb-2 line-clamp-1 font-['Manrope']">
-          {property.title}
-        </h3>
-        
-        <div className="flex items-center gap-1 text-muted-foreground text-sm mb-3">
-          <MapPin className="w-4 h-4 text-[#D4AF37]" />
-          {property.location}
+    const nextImage = (e) => {
+      e.stopPropagation();
+      setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    };
+
+    const prevImage = (e) => {
+      e.stopPropagation();
+      setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    };
+
+    return (
+      <Card 
+        className="bg-[#0F0F0F] border-white/5 overflow-hidden group cursor-pointer hover:border-[#D4AF37]/30 transition-all duration-300"
+        onClick={() => openDetails(property)}
+        data-testid={`property-card-${property.id}`}
+      >
+        {/* Image Carousel */}
+        <div className="relative h-52 overflow-hidden">
+          <img 
+            src={images[currentImageIndex]}
+            alt={property.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+          
+          {/* Carousel Navigation */}
+          {images.length > 1 && (
+            <>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={prevImage}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={nextImage}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+              
+              {/* Dots indicator */}
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
+                {images.map((_, idx) => (
+                  <div 
+                    key={idx}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      idx === currentImageIndex ? 'bg-white w-4' : 'bg-white/50'
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+          
+          {property.is_featured && (
+            <Badge className="absolute top-3 left-3 bg-[#D4AF37] text-black">
+              <Star className="w-3 h-3 mr-1" /> Featured
+            </Badge>
+          )}
+          
+          <Button 
+            size="icon" 
+            variant="ghost" 
+            className="absolute top-3 right-3 w-8 h-8 bg-black/50 hover:bg-black/70 text-white"
+            onClick={(e) => {
+              e.stopPropagation();
+              toast.success('Added to favorites');
+            }}
+          >
+            <Heart className="w-4 h-4" />
+          </Button>
+          
+          {/* Image count badge */}
+          {images.length > 1 && (
+            <Badge variant="secondary" className="absolute bottom-3 right-3 bg-black/70 text-white text-xs">
+              {images.length} photos
+            </Badge>
+          )}
         </div>
 
-        {/* Features */}
-        <div className="flex items-center gap-4 text-muted-foreground text-sm mb-4">
-          <div className="flex items-center gap-1">
-            <Bed className="w-4 h-4" /> {property.bedrooms}
+        {/* Content */}
+        <CardContent className="p-4">
+          <h3 className="font-semibold text-white text-lg mb-2 line-clamp-1 font-['Manrope']">
+            {property.title}
+          </h3>
+          
+          <div className="flex items-center gap-1 text-muted-foreground text-sm mb-3">
+            <MapPin className="w-4 h-4 text-[#D4AF37]" />
+            {property.location}
           </div>
-          <div className="flex items-center gap-1">
-            <Bath className="w-4 h-4" /> {property.bathrooms}
-          </div>
-          <div className="flex items-center gap-1">
-            <Maximize className="w-4 h-4" /> {property.size_sqm} m²
-          </div>
-        </div>
 
-        {/* Price */}
-        <p className="text-[#D4AF37] font-bold text-xl font-['Manrope']">
-          {formatPrice(property.price)}
-        </p>
-      </CardContent>
-    </Card>
-  );
+          {/* Features */}
+          <div className="flex items-center gap-4 text-muted-foreground text-sm mb-3">
+            <div className="flex items-center gap-1">
+              <Bed className="w-4 h-4" /> {property.bedrooms}
+            </div>
+            <div className="flex items-center gap-1">
+              <Bath className="w-4 h-4" /> {property.bathrooms}
+            </div>
+            <div className="flex items-center gap-1">
+              <Maximize className="w-4 h-4" /> {property.size_sqm} m²
+            </div>
+          </div>
+
+          {/* Amenities tags */}
+          {property.amenities?.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-3">
+              {property.amenities.slice(0, 3).map((amenity, idx) => (
+                <Badge key={idx} variant="secondary" className="bg-white/5 text-muted-foreground text-xs">
+                  {amenity}
+                </Badge>
+              ))}
+              {property.amenities.length > 3 && (
+                <Badge variant="secondary" className="bg-white/5 text-muted-foreground text-xs">
+                  +{property.amenities.length - 3}
+                </Badge>
+              )}
+            </div>
+          )}
+
+          {/* Price */}
+          <div className="flex items-center justify-between">
+            <p className="text-[#D4AF37] font-bold text-xl font-['Manrope']">
+              {formatPrice(property.price)}
+            </p>
+            {property.developer && (
+              <span className="text-xs text-muted-foreground">{property.developer}</span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="space-y-6" data-testid="marketplace-page">
@@ -166,12 +250,12 @@ const MarketplacePage = () => {
       <div 
         className="relative rounded-2xl overflow-hidden p-8 bg-cover bg-center"
         style={{
-          backgroundImage: 'linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url(https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1600)'
+          backgroundImage: 'linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.9)), url(https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1600)'
         }}
       >
         <div className="relative z-10">
           <h1 className="text-3xl font-bold text-white font-['Manrope'] mb-2">Marketplace</h1>
-          <p className="text-muted-foreground">UAE Premium Properties</p>
+          <p className="text-muted-foreground">UAE Premium Properties • {properties.length} listings</p>
         </div>
       </div>
 
@@ -227,36 +311,44 @@ const MarketplacePage = () => {
 
       {/* Property Details Dialog */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="bg-[#0F0F0F] border-white/10 max-w-2xl">
+        <DialogContent className="bg-[#0F0F0F] border-white/10 max-w-3xl max-h-[90vh] overflow-y-auto">
           {selectedProperty && (
             <>
-              <div className="relative h-64 -mx-6 -mt-6 mb-4 overflow-hidden rounded-t-lg">
-                <img 
-                  src={selectedProperty.image_url}
-                  alt={selectedProperty.title}
-                  className="w-full h-full object-cover"
+              {/* Image Gallery */}
+              <div className="-mx-6 -mt-6 mb-4">
+                <ImageGallery 
+                  images={selectedProperty.images?.length > 0 ? selectedProperty.images : [selectedProperty.image_url]}
+                  title={selectedProperty.title}
                 />
-                {selectedProperty.is_featured && (
-                  <Badge className="absolute top-4 left-4 bg-[#D4AF37] text-black">
-                    <Star className="w-3 h-3 mr-1" /> Featured
-                  </Badge>
-                )}
               </div>
+              
               <DialogHeader>
-                <DialogTitle className="text-2xl font-bold text-white font-['Manrope']">
-                  {selectedProperty.title}
-                </DialogTitle>
-                <DialogDescription className="flex items-center gap-1 text-muted-foreground">
-                  <MapPin className="w-4 h-4 text-[#D4AF37]" />
-                  {selectedProperty.location}
-                </DialogDescription>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <DialogTitle className="text-2xl font-bold text-white font-['Manrope']">
+                      {selectedProperty.title}
+                    </DialogTitle>
+                    <DialogDescription className="flex items-center gap-1 text-muted-foreground mt-1">
+                      <MapPin className="w-4 h-4 text-[#D4AF37]" />
+                      {selectedProperty.location}
+                    </DialogDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-white">
+                      <Heart className="w-5 h-5" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-white">
+                      <Share2 className="w-5 h-5" />
+                    </Button>
+                  </div>
+                </div>
               </DialogHeader>
               
               <div className="space-y-4 mt-4">
                 <p className="text-muted-foreground">{selectedProperty.description}</p>
                 
                 {/* Features */}
-                <div className="grid grid-cols-3 gap-4 p-4 rounded-lg bg-[#1A1A1A]">
+                <div className="grid grid-cols-4 gap-4 p-4 rounded-lg bg-[#1A1A1A]">
                   <div className="text-center">
                     <Bed className="w-6 h-6 text-[#D4AF37] mx-auto mb-1" />
                     <p className="text-white font-semibold">{selectedProperty.bedrooms}</p>
@@ -272,7 +364,34 @@ const MarketplacePage = () => {
                     <p className="text-white font-semibold">{selectedProperty.size_sqm}</p>
                     <p className="text-xs text-muted-foreground">Sq. Meters</p>
                   </div>
+                  <div className="text-center">
+                    <Calendar className="w-6 h-6 text-[#D4AF37] mx-auto mb-1" />
+                    <p className="text-white font-semibold">{selectedProperty.year_built || 'N/A'}</p>
+                    <p className="text-xs text-muted-foreground">Year Built</p>
+                  </div>
                 </div>
+
+                {/* Amenities */}
+                {selectedProperty.amenities?.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-white mb-2">Amenities</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedProperty.amenities.map((amenity, idx) => (
+                        <Badge key={idx} className="bg-[#D4AF37]/10 text-[#D4AF37]">
+                          {amenity}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Developer */}
+                {selectedProperty.developer && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Building className="w-4 h-4" />
+                    Developer: <span className="text-white">{selectedProperty.developer}</span>
+                  </div>
+                )}
 
                 {/* Price */}
                 <div className="flex items-center justify-between p-4 rounded-lg bg-[#D4AF37]/10">

@@ -12,6 +12,7 @@ import uuid
 from datetime import datetime, timezone, timedelta
 import bcrypt
 import jwt
+from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -25,6 +26,9 @@ db = client[os.environ['DB_NAME']]
 JWT_SECRET = os.environ.get('JWT_SECRET', 'dubai-realestate-secret-key-2024')
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24
+
+# LLM Configuration
+EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
 
 security = HTTPBearer()
 
@@ -208,7 +212,11 @@ class PropertyCreate(BaseModel):
     size_sqm: float = 0
     property_type: str = "apartment"
     image_url: Optional[str] = None
+    images: List[str] = []  # Gallery of images
     is_featured: bool = False
+    amenities: List[str] = []
+    year_built: Optional[int] = None
+    developer: Optional[str] = None
 
 class Property(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -223,10 +231,15 @@ class Property(BaseModel):
     size_sqm: float = 0
     property_type: str = "apartment"
     image_url: Optional[str] = None
+    images: List[str] = []  # Gallery of images
     is_featured: bool = False
+    amenities: List[str] = []
+    year_built: Optional[int] = None
+    developer: Optional[str] = None
     broker_id: Optional[str] = None
     company_id: Optional[str] = None
     status: str = "active"
+    views: int = 0
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class SubscriptionPlan(BaseModel):
@@ -247,6 +260,37 @@ class UserSubscription(BaseModel):
     status: str = "active"
     starts_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     expires_at: Optional[datetime] = None
+
+# Calculator Models
+class MortgageCalculation(BaseModel):
+    property_price: float
+    down_payment_percent: float = 20
+    loan_term_years: int = 25
+    interest_rate: float = 4.5
+
+class ROICalculation(BaseModel):
+    property_price: float
+    annual_rent: float
+    service_charges: float = 0
+    maintenance: float = 0
+
+class ExpensesCalculation(BaseModel):
+    property_price: float
+    property_type: str = "apartment"
+
+# Chat Models
+class ChatMessage(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    session_id: str
+    user_id: str
+    role: str  # user, assistant
+    content: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ChatRequest(BaseModel):
+    message: str
+    session_id: Optional[str] = None
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -1016,7 +1060,7 @@ async def seed_properties(current_user: dict = Depends(get_current_user)):
     sample_properties = [
         {
             "title": "Luxury Penthouse in Dubai Marina",
-            "description": "Stunning penthouse with panoramic views of the marina and sea",
+            "description": "Stunning penthouse with panoramic views of the marina and sea. Features floor-to-ceiling windows, private terrace, and premium finishes throughout.",
             "price": 15000000,
             "location": "Dubai Marina",
             "area": "Dubai Marina",
@@ -1025,11 +1069,22 @@ async def seed_properties(current_user: dict = Depends(get_current_user)):
             "size_sqm": 511,
             "property_type": "penthouse",
             "image_url": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
+            "images": [
+                "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
+                "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800",
+                "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800",
+                "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
+                "https://images.unsplash.com/photo-1600573472592-401b489a3cdc?w=800",
+                "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800"
+            ],
+            "amenities": ["Pool", "Gym", "Concierge", "Parking", "Sea View"],
+            "developer": "Emaar",
+            "year_built": 2022,
             "is_featured": True
         },
         {
             "title": "Palm Jumeirah Villa",
-            "description": "Beachfront villa with private pool and garden",
+            "description": "Beachfront villa with private pool and garden. Enjoy exclusive access to pristine beach and world-class amenities.",
             "price": 35000000,
             "location": "Palm Jumeirah",
             "area": "Palm Jumeirah",
@@ -1038,11 +1093,21 @@ async def seed_properties(current_user: dict = Depends(get_current_user)):
             "size_sqm": 1115,
             "property_type": "villa",
             "image_url": "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800",
+            "images": [
+                "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800",
+                "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800",
+                "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800",
+                "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=800",
+                "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=800"
+            ],
+            "amenities": ["Private Pool", "Beach Access", "Garden", "Smart Home", "Cinema Room"],
+            "developer": "Nakheel",
+            "year_built": 2020,
             "is_featured": True
         },
         {
             "title": "Downtown Dubai Apartment",
-            "description": "Modern apartment with Burj Khalifa views",
+            "description": "Modern apartment with stunning Burj Khalifa views. Located in the heart of Dubai with easy access to Dubai Mall.",
             "price": 4500000,
             "location": "Downtown Dubai",
             "area": "Downtown Dubai",
@@ -1051,11 +1116,21 @@ async def seed_properties(current_user: dict = Depends(get_current_user)):
             "size_sqm": 167,
             "property_type": "apartment",
             "image_url": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800",
+            "images": [
+                "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800",
+                "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800",
+                "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800",
+                "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800",
+                "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800"
+            ],
+            "amenities": ["Burj View", "Gym", "Pool", "Concierge"],
+            "developer": "Emaar",
+            "year_built": 2021,
             "is_featured": True
         },
         {
             "title": "Townhouse in Arabian Ranches",
-            "description": "Family-friendly townhouse with community amenities",
+            "description": "Family-friendly townhouse with community amenities. Perfect for families looking for suburban lifestyle with city convenience.",
             "price": 3200000,
             "location": "Arabian Ranches",
             "area": "Arabian Ranches",
@@ -1064,11 +1139,21 @@ async def seed_properties(current_user: dict = Depends(get_current_user)):
             "size_sqm": 260,
             "property_type": "townhouse",
             "image_url": "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800",
+            "images": [
+                "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800",
+                "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
+                "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?w=800",
+                "https://images.unsplash.com/photo-1600047509358-9dc75507daeb?w=800",
+                "https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?w=800"
+            ],
+            "amenities": ["Garden", "Community Pool", "Golf Course", "Kids Play Area"],
+            "developer": "Emaar",
+            "year_built": 2019,
             "is_featured": False
         },
         {
             "title": "Beachfront Apartment in JBR",
-            "description": "Direct beach access with stunning sunset views",
+            "description": "Direct beach access with stunning sunset views. Walking distance to The Walk and premium restaurants.",
             "price": 2800000,
             "location": "JBR",
             "area": "Jumeirah Beach Residence",
@@ -1077,11 +1162,21 @@ async def seed_properties(current_user: dict = Depends(get_current_user)):
             "size_sqm": 130,
             "property_type": "apartment",
             "image_url": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800",
+            "images": [
+                "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800",
+                "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=800",
+                "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?w=800",
+                "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?w=800",
+                "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800"
+            ],
+            "amenities": ["Beach Access", "Pool", "Gym", "Restaurants"],
+            "developer": "Dubai Properties",
+            "year_built": 2018,
             "is_featured": False
         },
         {
             "title": "Abu Dhabi Corniche Penthouse",
-            "description": "Luxurious penthouse overlooking the Corniche",
+            "description": "Luxurious penthouse overlooking the Corniche with spectacular sea views and premium amenities.",
             "price": 8500000,
             "location": "Abu Dhabi Corniche",
             "area": "Abu Dhabi",
@@ -1090,6 +1185,16 @@ async def seed_properties(current_user: dict = Depends(get_current_user)):
             "size_sqm": 325,
             "property_type": "penthouse",
             "image_url": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800",
+            "images": [
+                "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800",
+                "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800",
+                "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800",
+                "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
+                "https://images.unsplash.com/photo-1600210492493-0946911123ea?w=800"
+            ],
+            "amenities": ["Sea View", "Private Terrace", "Gym", "Spa"],
+            "developer": "Aldar",
+            "year_built": 2023,
             "is_featured": True
         }
     ]
@@ -1105,6 +1210,219 @@ async def seed_properties(current_user: dict = Depends(get_current_user)):
             created += 1
     
     return {"message": f"Created {created} sample properties"}
+
+# ============= CALCULATORS =============
+
+@api_router.post("/calculators/mortgage")
+async def calculate_mortgage(data: MortgageCalculation):
+    """Calculate mortgage payment"""
+    loan_amount = data.property_price * (1 - data.down_payment_percent / 100)
+    monthly_rate = data.interest_rate / 100 / 12
+    num_payments = data.loan_term_years * 12
+    
+    if monthly_rate > 0:
+        monthly_payment = loan_amount * (monthly_rate * (1 + monthly_rate)**num_payments) / ((1 + monthly_rate)**num_payments - 1)
+    else:
+        monthly_payment = loan_amount / num_payments
+    
+    total_payment = monthly_payment * num_payments
+    total_interest = total_payment - loan_amount
+    
+    return {
+        "property_price": data.property_price,
+        "down_payment": data.property_price * data.down_payment_percent / 100,
+        "loan_amount": round(loan_amount, 2),
+        "monthly_payment": round(monthly_payment, 2),
+        "total_payment": round(total_payment, 2),
+        "total_interest": round(total_interest, 2),
+        "loan_term_years": data.loan_term_years,
+        "interest_rate": data.interest_rate
+    }
+
+@api_router.post("/calculators/roi")
+async def calculate_roi(data: ROICalculation):
+    """Calculate ROI for rental property"""
+    annual_expenses = data.service_charges + data.maintenance
+    net_annual_income = data.annual_rent - annual_expenses
+    gross_yield = (data.annual_rent / data.property_price) * 100
+    net_yield = (net_annual_income / data.property_price) * 100
+    
+    # Payback period in years
+    payback_years = data.property_price / net_annual_income if net_annual_income > 0 else 0
+    
+    return {
+        "property_price": data.property_price,
+        "annual_rent": data.annual_rent,
+        "annual_expenses": annual_expenses,
+        "net_annual_income": round(net_annual_income, 2),
+        "gross_yield": round(gross_yield, 2),
+        "net_yield": round(net_yield, 2),
+        "monthly_income": round(net_annual_income / 12, 2),
+        "payback_years": round(payback_years, 1)
+    }
+
+@api_router.post("/calculators/expenses")
+async def calculate_expenses(data: ExpensesCalculation):
+    """Calculate total expenses for property purchase"""
+    # DLD (Dubai Land Department) fee - 4%
+    dld_fee = data.property_price * 0.04
+    
+    # Registration fee
+    if data.property_price <= 500000:
+        registration_fee = 2000
+    else:
+        registration_fee = 4000
+    
+    # Agent commission - 2%
+    agent_commission = data.property_price * 0.02
+    
+    # Mortgage registration (if applicable) - 0.25%
+    mortgage_registration = data.property_price * 0.0025
+    
+    # NOC fee (varies by developer)
+    noc_fee = 1000
+    
+    # Trustee fee
+    trustee_fee = 4000
+    
+    # DEWA deposit
+    dewa_deposit = 2000 if data.property_type == "apartment" else 4000
+    
+    # Estimated service charges (per sqm per year)
+    service_charge_rate = {
+        "apartment": 15,
+        "villa": 8,
+        "penthouse": 20,
+        "townhouse": 10
+    }.get(data.property_type, 15)
+    
+    total_one_time = dld_fee + registration_fee + agent_commission + noc_fee + trustee_fee + dewa_deposit
+    
+    return {
+        "property_price": data.property_price,
+        "dld_fee": round(dld_fee, 2),
+        "registration_fee": registration_fee,
+        "agent_commission": round(agent_commission, 2),
+        "mortgage_registration": round(mortgage_registration, 2),
+        "noc_fee": noc_fee,
+        "trustee_fee": trustee_fee,
+        "dewa_deposit": dewa_deposit,
+        "total_one_time_costs": round(total_one_time, 2),
+        "total_with_mortgage": round(total_one_time + mortgage_registration, 2),
+        "service_charge_rate_sqm": service_charge_rate,
+        "percentage_of_price": round((total_one_time / data.property_price) * 100, 2)
+    }
+
+# ============= AI ASSISTANT =============
+
+AI_SYSTEM_MESSAGE = """You are an expert real estate AI assistant for Dubai property market. You help clients with:
+- Finding properties matching their criteria
+- Explaining Dubai real estate market trends
+- Answering questions about buying process in UAE
+- Providing information about different areas in Dubai
+- Explaining mortgage options and fees
+- ROI and investment advice
+
+Be helpful, professional, and concise. Always provide accurate information about Dubai real estate.
+If you don't know something specific, recommend contacting a human agent.
+Respond in the same language the user writes to you."""
+
+@api_router.post("/chat")
+async def chat_with_ai(request: ChatRequest, current_user: dict = Depends(get_current_user)):
+    """Chat with AI assistant"""
+    session_id = request.session_id or str(uuid.uuid4())
+    user_id = current_user['sub']
+    
+    try:
+        # Save user message to DB
+        user_msg = ChatMessage(
+            session_id=session_id,
+            user_id=user_id,
+            role="user",
+            content=request.message
+        )
+        user_doc = user_msg.model_dump()
+        user_doc['created_at'] = user_doc['created_at'].isoformat()
+        await db.chat_messages.insert_one(user_doc)
+        
+        # Get chat history for context
+        history = await db.chat_messages.find(
+            {"session_id": session_id, "user_id": user_id},
+            {"_id": 0}
+        ).sort("created_at", 1).to_list(20)
+        
+        # Build context from history
+        context_messages = []
+        for msg in history[-10:]:  # Last 10 messages
+            context_messages.append(f"{msg['role']}: {msg['content']}")
+        
+        # Initialize LLM chat
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=session_id,
+            system_message=AI_SYSTEM_MESSAGE
+        ).with_model("openai", "gpt-4o")
+        
+        # Create message with context
+        full_message = request.message
+        if len(context_messages) > 1:
+            full_message = f"Previous conversation:\n" + "\n".join(context_messages[:-1]) + f"\n\nUser's new message: {request.message}"
+        
+        user_message = UserMessage(text=full_message)
+        
+        # Get AI response
+        response = await chat.send_message(user_message)
+        
+        # Save assistant message to DB
+        assistant_msg = ChatMessage(
+            session_id=session_id,
+            user_id=user_id,
+            role="assistant",
+            content=response
+        )
+        assistant_doc = assistant_msg.model_dump()
+        assistant_doc['created_at'] = assistant_doc['created_at'].isoformat()
+        await db.chat_messages.insert_one(assistant_doc)
+        
+        return {
+            "response": response,
+            "session_id": session_id
+        }
+    except Exception as e:
+        logger.error(f"Chat error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"AI chat error: {str(e)}")
+
+@api_router.get("/chat/history/{session_id}")
+async def get_chat_history(session_id: str, current_user: dict = Depends(get_current_user)):
+    """Get chat history for a session"""
+    messages = await db.chat_messages.find(
+        {"session_id": session_id, "user_id": current_user['sub']},
+        {"_id": 0}
+    ).sort("created_at", 1).to_list(100)
+    
+    for msg in messages:
+        if isinstance(msg.get('created_at'), str):
+            msg['created_at'] = datetime.fromisoformat(msg['created_at'])
+    
+    return messages
+
+@api_router.get("/chat/sessions")
+async def get_chat_sessions(current_user: dict = Depends(get_current_user)):
+    """Get all chat sessions for user"""
+    pipeline = [
+        {"$match": {"user_id": current_user['sub']}},
+        {"$group": {
+            "_id": "$session_id",
+            "last_message": {"$last": "$content"},
+            "created_at": {"$first": "$created_at"},
+            "message_count": {"$sum": 1}
+        }},
+        {"$sort": {"created_at": -1}},
+        {"$limit": 20}
+    ]
+    
+    sessions = await db.chat_messages.aggregate(pipeline).to_list(20)
+    return sessions
 
 # ============= ROOT =============
 

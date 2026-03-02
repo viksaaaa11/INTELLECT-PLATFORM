@@ -12,7 +12,9 @@ import {
   Menu,
   X,
   Bell,
-  Store
+  Store,
+  Calculator,
+  Bot
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from './ui/button';
@@ -41,6 +43,8 @@ const Layout = () => {
     { to: '/clients', icon: UserCircle, label: 'Clients' },
     { to: '/deals', icon: Briefcase, label: 'Deals' },
     { to: '/marketplace', icon: Store, label: 'Marketplace' },
+    { to: '/calculators', icon: Calculator, label: 'Calculators' },
+    { to: '/ai-assistant', icon: Bot, label: 'AI Assistant' },
     { to: '/wallet', icon: Wallet, label: 'Wallet' },
   ];
 

@@ -344,6 +344,152 @@ class DubaiRealEstateTester:
         
         return True
 
+    def test_marketplace_operations(self):
+        """Test marketplace and properties functionality (Phase 1 expansion)"""
+        print("\n🏢 Testing Marketplace Operations...")
+        
+        # Seed properties first
+        success, response, status = self.run_test("Seed Properties", "POST", "seed/properties", 200)
+        if success:
+            print(f"   Seeded properties: {response.get('message', 'Success')}")
+        
+        # Get all properties
+        success, properties, status = self.run_test("Get Properties", "GET", "properties", 200)
+        if not success:
+            return False
+        
+        print(f"   Found {len(properties)} properties")
+        
+        # Test property filtering
+        success, apartments, status = self.run_test("Filter Apartments", "GET", "properties?property_type=apartment", 200)
+        if success:
+            print(f"   Found {len(apartments)} apartments")
+        
+        # Test price filtering
+        success, expensive, status = self.run_test("Filter Expensive Properties", "GET", "properties?min_price=5000000", 200)
+        if success:
+            print(f"   Found {len(expensive)} properties above 5M AED")
+        
+        # Get a specific property if any exist
+        if properties and len(properties) > 0:
+            prop_id = properties[0].get('id')
+            success, property_detail, status = self.run_test(f"Get Property {prop_id}", "GET", f"properties/{prop_id}", 200)
+            if success:
+                images_count = len(property_detail.get('images', []))
+                print(f"   Property has {images_count} images in gallery")
+        
+        # Create a new property
+        property_data = {
+            "title": "Test Luxury Apartment - API Created",
+            "description": "Beautiful test property with sea views",
+            "price": 1500000,
+            "location": "Dubai Marina",
+            "bedrooms": 2,
+            "bathrooms": 2,
+            "size_sqm": 120,
+            "property_type": "apartment",
+            "images": [
+                "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
+                "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800"
+            ],
+            "amenities": ["Pool", "Gym", "Parking"],
+            "is_featured": False
+        }
+        
+        success, new_property, status = self.run_test("Create Property", "POST", "properties", 200, property_data)
+        if success:
+            print(f"   Created property: {new_property.get('title')}")
+        
+        return True
+
+    def test_calculators_operations(self):
+        """Test financial calculators functionality (Phase 1 expansion)"""
+        print("\n🧮 Testing Calculators Operations...")
+        
+        # Test mortgage calculator
+        mortgage_data = {
+            "property_price": 2000000,
+            "down_payment_percent": 25,
+            "loan_term_years": 20,
+            "interest_rate": 4.0
+        }
+        
+        success, mortgage_result, status = self.run_test("Mortgage Calculator", "POST", "calculators/mortgage", 200, mortgage_data)
+        if success:
+            monthly_payment = mortgage_result.get('monthly_payment')
+            total_interest = mortgage_result.get('total_interest')
+            print(f"   Mortgage: {monthly_payment:,.0f} AED/month, Total interest: {total_interest:,.0f} AED")
+        
+        # Test ROI calculator
+        roi_data = {
+            "property_price": 2000000,
+            "annual_rent": 150000,
+            "service_charges": 20000,
+            "maintenance": 10000
+        }
+        
+        success, roi_result, status = self.run_test("ROI Calculator", "POST", "calculators/roi", 200, roi_data)
+        if success:
+            gross_yield = roi_result.get('gross_yield')
+            net_yield = roi_result.get('net_yield')
+            print(f"   ROI: Gross yield {gross_yield}%, Net yield {net_yield}%")
+        
+        # Test expenses calculator
+        expenses_data = {
+            "property_price": 2000000,
+            "property_type": "apartment"
+        }
+        
+        success, expenses_result, status = self.run_test("Expenses Calculator", "POST", "calculators/expenses", 200, expenses_data)
+        if success:
+            total_costs = expenses_result.get('total_one_time_costs')
+            percentage = expenses_result.get('percentage_of_price')
+            print(f"   Expenses: {total_costs:,.0f} AED ({percentage}% of price)")
+        
+        return True
+
+    def test_ai_assistant_operations(self):
+        """Test AI assistant chat functionality (Phase 1 expansion)"""
+        print("\n🤖 Testing AI Assistant Operations...")
+        
+        # Test initial chat
+        chat_data = {
+            "message": "What areas in Dubai are best for investment?",
+            "session_id": None
+        }
+        
+        success, chat_response, status = self.run_test("AI Chat - First Message", "POST", "chat", 200, chat_data)
+        if not success:
+            print("   ⚠️  AI Chat might not be working - check EMERGENT_LLM_KEY")
+            return False
+        
+        session_id = chat_response.get('session_id')
+        ai_response = chat_response.get('response', '')
+        print(f"   AI Response length: {len(ai_response)} characters")
+        print(f"   Session ID: {session_id}")
+        
+        # Test follow-up message in same session
+        followup_data = {
+            "message": "Tell me more about Dubai Marina properties",
+            "session_id": session_id
+        }
+        
+        success, followup_response, status = self.run_test("AI Chat - Follow-up", "POST", "chat", 200, followup_data)
+        if success:
+            print(f"   Follow-up response length: {len(followup_response.get('response', ''))}")
+        
+        # Test getting chat history
+        success, history, status = self.run_test(f"Get Chat History", "GET", f"chat/history/{session_id}", 200)
+        if success:
+            print(f"   Chat history: {len(history)} messages")
+        
+        # Test getting all sessions
+        success, sessions, status = self.run_test("Get Chat Sessions", "GET", "chat/sessions", 200)
+        if success:
+            print(f"   Total chat sessions: {len(sessions)}")
+        
+        return True
+
     def test_super_admin_registration(self):
         """Test super admin registration"""
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -432,6 +578,11 @@ def main():
     
     # Test deals operations
     tester.test_deals_operations()
+    
+    # Test Phase 1 expansion features
+    tester.test_marketplace_operations()
+    tester.test_calculators_operations()
+    tester.test_ai_assistant_operations()
     
     # Test super admin functionality
     tester.test_super_admin_registration()
