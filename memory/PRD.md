@@ -15,6 +15,7 @@
 - **Backend**: FastAPI + Python 3
 - **Database**: MongoDB (Motor async driver)
 - **Auth**: JWT Authentication
+- **AI**: GPT-4o via Emergent Integrations
 - **Design**: Dark theme with gold accents (Luxury Real Estate branding)
 
 ## User Personas
@@ -34,71 +35,66 @@
 ## What's Been Implemented
 
 ### Phase 1 MVP - Completed (March 2, 2026)
+- Auth, Companies, Users, Leads, CRM, Deals, Wallet, Admin Panel
+- Marketplace with property cards
+- Subscription plans (Standard, Pro, Enterprise)
+- Background images throughout the app
 
-#### Backend (FastAPI)
-- [x] Auth: Register, Login, JWT tokens
-- [x] Companies CRUD (Super Admin only)
-- [x] Users management with roles
-- [x] Leads CRUD + purchase flow
-- [x] Clients CRM with notes
-- [x] Deals pipeline (viewing → offer → booking → closed)
-- [x] Wallet with transactions (top-up, debit)
-- [x] Dashboard API with metrics
-- [x] Admin stats endpoint
-- [x] **Marketplace Properties API**
-- [x] **Subscription Plans API** (Standard, Pro, Enterprise)
+### Phase 1 Expansion - Completed (March 2, 2026)
 
-#### Frontend (React)
-- [x] Auth pages (Login, Register)
-- [x] Layout with sidebar navigation
-- [x] Dashboard with metrics and charts + Dubai skyline background
-- [x] Leads table with purchase flow + background image
-- [x] Clients CRM with notes sidebar
-- [x] Deals pipeline (Kanban view) + background image
-- [x] **Marketplace** - Property cards with images, filters, search
-- [x] **Wallet** - Balance card, Club Membership (3 plans), Transactions
-- [x] Admin panel (Companies, Users, Leads upload)
+#### Image Gallery (5-6 photos per property)
+- [x] Properties have images array with 5-6 photos
+- [x] Carousel navigation on cards (arrows, dots)
+- [x] Fullscreen image viewer with thumbnails
+- [x] Photo count badge on cards
 
-#### Design
-- [x] Dark theme (#050505 background)
-- [x] Gold accents (#D4AF37)
-- [x] Manrope + Inter fonts
-- [x] Luxury real estate branding
-- [x] **Background images on all key pages** (Dubai skyline, properties)
-- [x] **Property images in Marketplace cards**
+#### Financial Calculators
+- [x] **Mortgage Calculator** - Monthly payments, total interest, loan breakdown
+- [x] **ROI Calculator** - Gross/net yield, payback period, monthly income
+- [x] **Expenses Calculator** - DLD 4%, registration, agent commission, NOC, DEWA
+
+#### AI Assistant (GPT-4o)
+- [x] Chat interface with history
+- [x] GPT-powered responses about Dubai real estate
+- [x] Session management
+- [x] Suggested questions
+- [x] 24/7 consultation capability
+
+**Tests**: Backend 97%, Frontend 85%, Overall 85%
 
 ## Prioritized Backlog
 
-### P0 - Critical (Next Sprint)
-- [ ] Broker Marketplace (requests & offers between brokers)
-- [ ] Internal chat for deals
+### P0 - Critical (Phase 2 - Next Sprint)
+- [ ] Личный кабинет инвестора (портфель, доходность, документы, календарь)
+- [ ] Система рейтингов и отзывов (агенты, застройщики)
 
-### P1 - High Priority
-- [ ] CSV bulk lead upload
-- [ ] Lead assignment within teams
-- [ ] Commission calculations
-- [ ] Real payment gateway (Stripe)
+### P1 - High Priority (Phase 3)
+- [ ] Реферальная программа (бонусы, партнёрская для блогеров)
+- [ ] Платные размещения для застройщиков (Premium листинги 500-2000 AED)
+- [ ] Broker Marketplace (запросы между брокерами)
+- [ ] Internal Chat для сделок
 
 ### P2 - Medium Priority
-- [ ] Firebase push notifications
-- [ ] Facebook Lead Ads webhook
-- [ ] WhatsApp Cloud API integration
-- [ ] AI lead scoring
+- [ ] Комиссия с транзакций (1-3%)
+- [ ] Escrow-сервис для безопасных сделок
+- [ ] Юридическое сопровождение сделки
+- [ ] Оценка недвижимости
+- [ ] Ипотечный брокер (партнёрство с банками)
 
 ### P3 - Low Priority
 - [ ] Mobile app (Flutter/React Native)
-- [ ] Advanced analytics
 - [ ] Multi-language support
+- [ ] Facebook Lead Ads webhook
+- [ ] WhatsApp Cloud API
 
 ## Next Action Items
-1. Implement Broker Marketplace (broker requests & offers)
-2. Add Internal Chat for deals
-3. Integrate Stripe for real payments
-4. CSV import for bulk lead creation
+1. Личный кабинет инвестора (портфель недвижимости)
+2. Система рейтингов и отзывов
+3. Реферальная программа
+4. Premium листинги для застройщиков
 
 ## Technical Notes
 - New users start with 1000 AED wallet balance
-- Leads become unavailable after purchase
-- All data is company-isolated (multi-tenant)
-- Subscription plans: Standard (550 AED), Pro (900 AED), Enterprise (1500 AED)
-- 6 sample properties seeded automatically
+- EMERGENT_LLM_KEY configured for GPT-4o
+- Properties seeded with 6 sample listings + 5-6 photos each
+- Calculators use UAE-specific fees (DLD 4%, etc.)
