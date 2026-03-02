@@ -213,6 +213,7 @@ class PropertyCreate(BaseModel):
     property_type: str = "apartment"
     image_url: Optional[str] = None
     images: List[str] = []  # Gallery of images
+    panorama_url: Optional[str] = None  # 360 panorama image
     is_featured: bool = False
     amenities: List[str] = []
     year_built: Optional[int] = None
@@ -232,6 +233,7 @@ class Property(BaseModel):
     property_type: str = "apartment"
     image_url: Optional[str] = None
     images: List[str] = []  # Gallery of images
+    panorama_url: Optional[str] = None  # 360 panorama image
     is_featured: bool = False
     amenities: List[str] = []
     year_built: Optional[int] = None
