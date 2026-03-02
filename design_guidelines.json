@@ -1,0 +1,109 @@
+{
+  "project_name": "Dubai Real Estate SaaS Platform",
+  "design_philosophy": {
+    "identity": "E1: The Anti-AI Designer",
+    "theme": "Luxury Dark Mode (Obsidian & Gold)",
+    "emotional_archetype": "Jewel & Luxury",
+    "core_principles": [
+      "Fusion over Imitation: Mix Fintech precision with Hotel Luxury hospitality.",
+      "Emotion First: Every screen must feel expensive and exclusive.",
+      "Contrast: Deepest blacks vs. luminous gold/bronze.",
+      "Content is King: Property images and financial data are the heroes."
+    ]
+  },
+  "typography": {
+    "font_family_headings": "Manrope, sans-serif",
+    "font_family_body": "Inter, sans-serif",
+    "instructions": "Use 'Manrope' for all Headings (H1-H6) and metrics. Use 'Inter' for body text, tables, and inputs. Headings must be tracking-tight. Metrics should be prominent and bold.",
+    "scale": {
+      "h1": "text-4xl md:text-5xl font-bold tracking-tight",
+      "h2": "text-3xl font-semibold tracking-tight",
+      "h3": "text-2xl font-medium",
+      "body": "text-sm text-muted-foreground",
+      "metric_large": "text-5xl font-bold text-foreground",
+      "metric_label": "text-xs uppercase tracking-widest text-muted-foreground"
+    }
+  },
+  "colors": {
+    "palette": {
+      "background": "#050505",
+      "foreground": "#FAFAFA",
+      "card": "#0F0F0F",
+      "card_foreground": "#FAFAFA",
+      "primary": "#D4AF37",
+      "primary_foreground": "#000000",
+      "secondary": "#1A1A1A",
+      "secondary_foreground": "#FAFAFA",
+      "muted": "#1F1F1F",
+      "muted_foreground": "#A1A1AA",
+      "accent": "#2A2A2A",
+      "accent_foreground": "#D4AF37",
+      "border": "rgba(212, 175, 55, 0.15)",
+      "input": "#1A1A1A",
+      "ring": "#D4AF37"
+    },
+    "gradients": {
+      "gold_metallic": "linear-gradient(135deg, #D4AF37 0%, #B8860B 100%)",
+      "obsidian_glass": "linear-gradient(180deg, rgba(15,15,15,0.8) 0%, rgba(15,15,15,0.95) 100%)",
+      "bronze_glow": "linear-gradient(45deg, #CD7F32 0%, #8B4513 100%)"
+    }
+  },
+  "layout_strategies": {
+    "dashboard_grid": "Mode B: High Density. Use grid-cols-12. Summary metrics col-span-12 md:col-span-3. Main chart col-span-12 md:col-span-8. Feed col-span-12 md:col-span-4.",
+    "glassmorphism": "Use heavily for Sidebar and Sticky Headers. bg-black/80 backdrop-blur-xl border-r border-white/5.",
+    "containers": "Cards must have 'rounded-xl' or 'rounded-2xl'. Borders must be subtle (border-white/5 or border-gold/10)."
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#D4AF37] text-black hover:bg-[#B8860B] font-semibold rounded-lg shadow-[0_0_15px_rgba(212,175,55,0.3)] transition-all duration-300",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-white/5",
+      "outline": "border border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black"
+    },
+    "cards": {
+      "default": "bg-card border border-border/50 rounded-xl shadow-none hover:border-[#D4AF37]/30 transition-colors duration-300",
+      "glass": "bg-black/40 backdrop-blur-md border border-white/5"
+    },
+    "inputs": {
+      "default": "bg-input border-transparent focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] rounded-lg h-10"
+    },
+    "navigation": {
+      "sidebar": "Fixed left. w-64. bg-[#050505] border-r border-white/5. Links: hover:text-[#D4AF37] hover:bg-white/5 rounded-md transition-all",
+      "header": "Sticky top. h-16. bg-[#050505]/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-6"
+    }
+  },
+  "visual_enhancers": {
+    "borders": "1px solid rgba(255, 255, 255, 0.08)",
+    "shadows": {
+      "glow": "0 0 20px rgba(212, 175, 55, 0.15)",
+      "card": "0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3)"
+    },
+    "textures": "Use subtle noise overlay on the main background if possible, or keep it clean obsidian."
+  },
+  "image_urls": {
+    "login_hero": "https://images.unsplash.com/photo-1749849934727-bc57c0bd9dd2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjh8MHwxfHNlYXJjaHwyfHxkdWJhaSUyMGx1eHVyeSUyMHNreWxpbmUlMjBuaWdodHxlbnwwfHx8fDE3NzI0Njg5NDB8MA&ixlib=rb-4.1.0&q=85",
+    "dashboard_bg": "https://images.unsplash.com/photo-1761437855598-a84c2849dc6a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzJ8MHwxfHNlYXJjaHwyfHxibGFjayUyMGdvbGQlMjBhYnN0cmFjdCUyMHRleHR1cmV8ZW58MHx8fHwxNzcyNDY4OTQyfDA&ixlib=rb-4.1.0&q=85",
+    "property_1": "https://images.unsplash.com/photo-1757439402296-000be181e38b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzB8MHwxfHNlYXJjaHxfHxtb2Rlcm4lMjBsdXh1cnklMjB2aWxsYSUyMGV4dGVyaW9yJTIwbmlnaHR8ZW58MHx8fHwxNzcyNDY4OTQxfDA&ixlib=rb-4.1.0&q=85",
+    "property_2": "https://images.unsplash.com/photo-1757439402268-1da284675170?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzB8MHwxfHNlYXJjaHwzfHxtb2Rlcm4lMjBsdXh1cnklMjB2aWxsYSUyMGV4dGVyaW9yJTIwbmlnaHR8ZW58MHx8fHwxNzcyNDY4OTQxfDA&ixlib=rb-4.1.0&q=85",
+    "agent_avatar_1": "https://images.unsplash.com/photo-1770199105692-9e52ff137cad?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODh8MHwxfHNlYXJjaHwyfHxwcm9mZXNzaW9uYWwlMjByZWFsJTIwZXN0YXRlJTIwYWdlbnQlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NzI0Njg5NDF8MA&ixlib=rb-4.1.0&q=85",
+    "agent_avatar_2": "https://images.unsplash.com/photo-1632131016411-0183bc4efdd8?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODh8MHwxfHNlYXJjaHw0fHxwcm9mZXNzaW9uYWwlMjByZWFsJTIwZXN0YXRlJTIwYWdlbnQlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NzI0Njg5NDF8MA&ixlib=rb-4.1.0&q=85",
+    "texture_gold_abstract": "https://images.unsplash.com/photo-1761437855598-011cf89b2ad4?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzJ8MHwxfHNlYXJjaHwxfHxibGFjayUyMGdvbGQlMjBhYnN0cmFjdCUyMHRleHR1cmV8ZW58MHx8fHwxNzcyNDY4OTQyfDA&ixlib=rb-4.1.0&q=85"
+  },
+  "universal_guidelines": [
+    "NEVER use gradients for dark colors. Use solid deep blacks (#050505) or dark greys.",
+    "Avoid 'Inter' for Headings. Use 'Manrope'.",
+    "Use 'Sonner' for toasts.",
+    "Interactive elements must have a golden glow on hover/active.",
+    "All interactive elements MUST include 'data-testid'.",
+    "Do NOT use transparent backgrounds for dropdowns/modals without a solid blur or dark tint backing."
+  ],
+  "instructions_to_main_agent": [
+    "1. UPDATE /app/frontend/src/index.css first. Replace the root variables with the provided dark mode palette. Force Dark Mode by default (add 'dark' class to html/body or set CSS vars in :root).",
+    "2. INSTALL 'lucide-react' and 'recharts' if not present.",
+    "3. CREATE a Layout component that includes the Sidebar and Header.",
+    "4. USE the provided image URLs for the Dashboard demo data.",
+    "5. ENSURE the gold color (#D4AF37) is used for primary actions (Add Lead, Book Deal).",
+    "6. USE 'Manrope' font from Google Fonts (import in index.css).",
+    "7. IMPLEMENT the 'Wallet' page with a credit-card style visual using the gold texture.",
+    "8. BUILD the 'Marketplace' with a grid of luxury property cards."
+  ]
+}
